@@ -1,0 +1,59 @@
+name: DevOps Course Basic App CI
+on : [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 
+
+      - name : Run application
+        run: |
+          python src/use.py 52.95.110.1
+
+      - name: Run nosetests
+        run: |
+          pip install nose
+          nosetests test/
+
+      - name: Lint with flake8
+        run : |
+          pip install flake8
+          flake8 . --ignore=F401,E302,W292,E111,E114,E302,501,F401,W292,W391,E501,W293 --max-line-length=120 --exclude=venv,__pycache__
+        
+  dockrer_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false  # Mettre à true pour pousser l'image
+          tags: monimage:latest   
+
+
+
+      
+
+      
+    
+    

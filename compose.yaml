@@ -1,0 +1,30 @@
+services:
+  web:
+    build: .
+    container_name: django_app
+    ports:
+      - "8001:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    # develop:
+    #   watch:
+    #     - action: sync
+    #       path: 
+    #       target: /app 
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    ports:
+      - "8000:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=mydatabase
+      - MYSQL_USER=mydatabaseuser
+      - MYSQL_PASSWORD=mypassword
+
+volumes:
+  mysql_data:
+
