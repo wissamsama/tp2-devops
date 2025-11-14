@@ -1,59 +1,39 @@
-name: DevOps Course Basic App CI
-on : [push, pull_request]
+name: Docker build & push to ECR
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          python-version: '3.9'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: eu-west-3   # Remplace par ta région
 
-      - name: Install dependencies
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install flake8 
+          docker build -t django-polls .
 
-      - name : Run application
+      - name: Tag image
         run: |
-          python src/use.py 52.95.110.1
+          docker tag django-polls:latest \
+          ${{ steps.login-ecr.outputs.registry }}/django-polls:latest
 
-      - name: Run nosetests
+      - name: Push image to ECR
         run: |
-          pip install nose
-          nosetests test/
-
-      - name: Lint with flake8
-        run : |
-          pip install flake8
-          flake8 . --ignore=F401,E302,W292,E111,E114,E302,501,F401,W292,W391,E501,W293 --max-line-length=120 --exclude=venv,__pycache__
-        
-  dockrer_build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false  # Mettre à true pour pousser l'image
-          tags: monimage:latest   
-
-
-
-      
-
-      
-    
-    
+          docker push ${{ steps.login-ecr.outputs.registry }}/django-polls:latest
